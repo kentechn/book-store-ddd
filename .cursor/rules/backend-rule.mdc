@@ -1,0 +1,184 @@
+---
+description: "backend/配下の実装をする前に必ず読むべき内容"
+globs: backend/**
+alwaysApply: false
+---
+
+まず、このファイルを理解したら「backend-rule を読みました。」と言ってください。
+このルールは backend/ の開発作業に適用してください。
+
+# 概要
+
+このプロジェクトのバックエンドは、**Nest.js** フレームワークを使用し、**DDD（ドメイン駆動開発）** と **CQRS（Command Query Responsibility Segregation）** を組み合わせたアーキテクチャを採用しています。
+
+## CQRS アーキテクチャ
+
+このプロジェクトでは、**Event Sourcing** ではなく **State Sourcing** に CQRS を組み込んでいます。これにより、**Command（書き込み）** 側と **Query（読み取り）** 側で同じデータベースを参照します。
+
+この構成を採用する主な理由は、Command 側で DDD を用いると、データ取得処理（`Get`）が複雑になりがちだからです。そのため、以下のように役割を分けています。
+
+- **Command 側**: DDD を用いて、データの書き込み・更新・削除ロジックを扱います。
+- **Query 側**: **Port-Adapter パターン** に基づき、Prisma を直接使用して読み取り処理を最適化します。
+
+Command と Query はデータベースを共有しますが、それ以外の機能（ユーティリティ関数など）は共有しません。
+
+## ディレクトリ構成
+
+`src` ディレクトリ配下は、役割に応じて分割されています。
+
+```
+├── src
+│   ├── command   # 書き込み・更新・削除処理
+│   │   ├── application  # アプリケーションサービス層
+│   │   ├── presetntation   # プレゼンテーション層
+│   │   ├── domain       # ドメイン層
+│   │   ├── dto          # DTO（データ転送オブジェクト）定義
+│   │   ├── infra        # インフラストラクチャ層
+│   │   └── types        # 型定義
+│   ├── query     # 読み取り専用API処理
+│   │   ├── application  # アプリケーションサービス層
+│   │   ├── presetntation   # プレゼンテーション層
+│   │   ├── dao          # DAO（データアクセスオブジェクト）層
+│   │   ├── dto          # DTO定義
+│   │   └── types        # 型定義
+
+## 依存関係
+
+各層の依存関係は以下の通りです。
+
+- **Command**: `controller` -\> `application` -\> `domain` \<- `infra`
+- **Query**: `controller` -\> `application` \<- `dao`
+
+# Strict Rule
+
+以下の項目は、プロジェクトの整合性を保つ上で特に重要なルールです。これらに違反している箇所を見つけたら、些細なことでも報告してください。
+
+## 開発全般
+
+- スキーマ変更後は必ず`npx prisma generate`でクライアントを再生成すること
+- データ加工（集計、フィルタリング、結合など）のロジックは、アプリケーションロジックではなく、可能な限りデータベースクエリで完結させること
+
+  - 例
+    - 条件でフィルタリングする場合、アプリケーションで全件取得せず、WHERE 句を使いデータベースでフィルタリングする
+    - 合計値を計算する場合、アプリケーションで全件取得せず、SUM()関数を使いデータベースで合計する
+
+- テスト容易性の確保
+
+  - DAO 層やリポジトリ層では外部依存（現在時刻、乱数など）を直接使用せず、パラメータとして注入可能にすること
+  - インターフェース設計時にテスト容易性を考慮し、必要に応じて依存性注入を可能にすること
+
+- 型チェックの実行
+
+  - タスク実行時に既存のコードと整合性が取れているか確認するために、適宜`npm run test`, `npm run tsc`を実行すること
+  - タスク完了時に`npm run fix-all`を実行し、整形すること
+
+- エラーハンドリング
+  - エラーはそれぞれの層でカスタムエラーを作成し、例外的な状況以外で `throw new Error()`を使ってはいけない
+  - エラーはそれぞれの層で以下のように包み直す
+
+```
+
+## Command
+
+- ドメイン層とアプリケーション層以外はユビキタス言語で記載しない。
+  - コントローラー層、リポジトリ層は`create`や`update`等の RESTAPI の言葉で記載すること
+- `upsert`ではなく`create`と`update`を使うこと
+  - `upsert`は楽観的ロックが使えないため使用しない
+  - 楽観的ロックを使うために create が失敗したら update を実行するようにすることもできるが、try-catch で囲われる部分が多くなり、可読性が悪くなるためやめる。
+- 外部サービスと連携しているテーブル（例: `AtsysApplicant` テーブル, `ApplicantSelectionProcess` テーブル）は、\*\*`command` 配下で直接更新してはいけない
+  - 外部サービスから連携されているか否かは Prisma のコメントアウトを確認
+- 外部連携はコントローラー層、サービス層、リポジトリ層で別ファイルで定義すること
+  - ドメイン層で定義しているインターフェースも別で定義する
+  - 例：カレンダー登録(GoogleCalendar)に関する処理を含むファイルは分割する
+    - backend/src/command/controller/interview-slot/http/interview-slot.controller.ts
+    - backend/src/command/controller/interview-slot/http/interview-slot-calendar.controller.ts
+- ビジネスロジックの実装可能箇所は Domain ロジックに記載
+- ドメインサービスは以下の制約にしたがって実装する
+  - 複数 entity に渡る処理
+  - infra 層（外部依存）を利用してはいけない
+    - infra 層を利用する場合は、アプリケーションサービスに記載する
+    - **どこにも依存していないか？**を基準に考える
+
+## Query
+
+- 原則「読み取り専用」。DAO 層での書き込み操作（create/update/delete/upsert/raw-insert 等）は禁止
+- 複雑な集計・フィルタは DB 側（Prisma/SQL）で完結させる（アプリ側で全件ロードしない）
+
+# コーディングスタイル
+
+## 関数とクラス
+
+- 関数の引数は常に keyword arguments 形式で記載すること
+
+  - 引数が 2 つ以上の場合は必ずオブジェクト形式で受け取る
+  - 例: `function example({ param1, param2 }: { param1: string; param2: number })`
+
+- command 側 API ではコントローラー層で VO 生成し、アプリケーション層に渡すこと
+
+  - DTO から VO への変換はコントローラー層の責務とすること
+  - VO クラスのファクトリメソッドには`create`を使用すること
+
+- バリデーション関数の 返り値は Boolean とする
+  - 関数内で条件を満たさない場合は、`throw new Error`ではなく、false を返すこと
+  - その false を条件分岐として呼び出し元で Error を throw する
+
+## 可読性と型安全
+
+- any 型や型アサーション（`as`）、非ヌル宣言（`!`）は原則用いない
+
+  - 用いる場合は必ずコメントアウトで理由を添えること
+
+- if 文はネストが深くならないように記述すること（原則 2 段まで）
+
+  - 複雑なネストによる可読性低下・バグ混入を防ぐ
+
+  ```ts
+  # OK
+  function getCategory(status: string): string {
+    if (status === "apple" || status === "grape") {
+      return "fruit";
+    }
+    if (status === "tomato") {
+      return "vegetable";
+    }
+    return "other";
+  }
+
+  # NG
+  function getCategory(status: string): string {
+    if (status) {
+      if (status === "apple" || status === "grape") {
+        return "fruit";
+      } else {
+        if (status === "tomato") {
+          return "vegetable";
+        } else {
+          return "other";
+        }
+      }
+    } else {
+      return "other";
+    }
+  }
+  ```
+
+# テスト
+
+## 開発全般
+
+- テストでは固定値を使用し、再現性と安定性を確保すること
+- 動的な値（new Date()など）をテストで使用する場合は、テストの意図を明確にすること
+- 必ず「正常系」,「異常系」をプレフィックスとして設けること
+- 新規作成した関数や例外を投げる処理があれば必ずテストケースに含める
+- 境界条件は必ずテストケースに含める
+
+## Command
+
+- controller 層と repository 層のテストでは、モックを利用せず、直接 DB を使用してテスト
+
+## Query
+
+- 全て mock で記載
+- 動作が不明瞭になりやすい箇所は結合テストで実装
+
+  - 例: 生クエリを使った関数
