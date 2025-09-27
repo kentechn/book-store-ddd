@@ -24,6 +24,13 @@ $ pnpm run start:prod
 pnpm run check
 ```
 
+## db起動からマイグレーション
+```bash
+# db起動
+docker compose up -d
+pnpm run generate
+pnpm run db:migrate:dev
+```
 
 ## テスト実行
 
