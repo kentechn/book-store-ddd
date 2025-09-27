@@ -1,3 +1,5 @@
+import { InsufficientStockError } from "./errors/insufficient-stock.error";
+
 export class Book {
   private readonly _id: string;
   private readonly _stock: number;
@@ -59,5 +61,20 @@ export class Book {
 
   get name(): string {
     return this._name;
+  }
+
+  decreaseStock(quantity: number): Book {
+    if (this._stock - quantity < 0) {
+      throw new InsufficientStockError();
+    }
+    return new Book({
+      id: this._id,
+      stock: this._stock - quantity,
+      price: this._price,
+      isPaperback: this._isPaperback,
+      userId: this._userId,
+      saleDate: this._saleDate,
+      name: this._name,
+    });
   }
 }
