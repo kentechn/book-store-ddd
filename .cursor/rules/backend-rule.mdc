@@ -29,14 +29,14 @@ Command と Query はデータベースを共有しますが、それ以外の�
 ```
 ├── src
 │   ├── command   # 書き込み・更新・削除処理
-│   │   ├── application  # アプリケーションサービス層
+│   │   ├── usecase  # ユースケース層
 │   │   ├── presetntation   # プレゼンテーション層
 │   │   ├── domain       # ドメイン層
 │   │   ├── dto          # DTO（データ転送オブジェクト）定義
 │   │   ├── infra        # インフラストラクチャ層
 │   │   └── types        # 型定義
 │   ├── query     # 読み取り専用API処理
-│   │   ├── application  # アプリケーションサービス層
+│   │   ├── usecase  # ユースケース層
 │   │   ├── presetntation   # プレゼンテーション層
 │   │   ├── dao          # DAO（データアクセスオブジェクト）層
 │   │   ├── dto          # DTO定義
