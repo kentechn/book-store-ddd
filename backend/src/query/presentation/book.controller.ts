@@ -6,6 +6,7 @@ import {
   HttpStatus,
   NotFoundException,
   Param,
+  Query,
 } from "@nestjs/common";
 import { Book } from "../types/book";
 import { GetBooksUsecase } from "../usecase/book/getBooks";
@@ -19,23 +20,10 @@ export class BookController {
     private readonly GetBookDetailUsecase: GetBookDetailUsecase
   ) {}
 
-  @Get()
-  async getBooks(
-    @Param("limit") limit: number,
-    @Param("offset") offset: number
-  ): Promise<{ books: Book[]; limit: number; offset: number; total: number }> {
-    try {
-      const books = await this.GetBooksUsecase.execute();
-      return { books, limit: 10, offset: 0, total: books.length };
-    } catch (error) {
-      throw error;
-    }
-  }
-
   @Get(":id")
   async getBookDetail(@Param("id") id: string): Promise<Book | undefined> {
     try {
-      if (isValid(id)) {
+      if (!isValid(id)) {
         throw new BadRequestException("リクエストが不正です");
       }
 
@@ -72,6 +60,19 @@ export class BookController {
           }
         );
       }
+      throw error;
+    }
+  }
+
+  @Get()
+  async getBooks(
+    @Query("limit") limit?: number,
+    @Query("offset") offset?: number
+  ): Promise<{ books: Book[]; limit: number; offset: number; total: number }> {
+    try {
+      const books = await this.GetBooksUsecase.execute();
+      return { books, limit: 10, offset: 0, total: books.length };
+    } catch (error) {
       throw error;
     }
   }
