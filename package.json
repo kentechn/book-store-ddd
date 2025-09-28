@@ -1,0 +1,18 @@
+{
+  "name": "book-store-ddd",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "openapi:lint": "redocly lint docs/openapi.yml",
+    "openapi:build:doc": "redocly build-docs docs/openapi.yml -o docs/openapi.html"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.15.1",
+  "devDependencies": {
+    "orval": "^7.12.2",
+    "@redocly/cli": "^2.2.2"
+  }
+}

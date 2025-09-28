@@ -1,0 +1,437 @@
+openapi: 3.0.3
+info:
+  title: BookStore API
+  description: "DDD実践のための書店APIサービス"
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: BookStore API Team
+    email: support@bookstore.example.com
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.bookstore.example.com
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /books:
+    get:
+      operationId: getBooks
+      summary: "書籍一覧取得"
+      description: "販売中の書籍一覧を取得します"
+      tags:
+        - Books
+      security: []
+      parameters:
+        - name: limit
+          in: query
+          description: "取得する書籍数の上限"
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: "取得開始位置（ページネーション用）"
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: "書籍一覧の取得成功"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  books:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Book'
+                  total:
+                    type: integer
+                    description: "総書籍数"
+                  limit:
+                    type: integer
+                    description: "取得上限数"
+                  offset:
+                    type: integer
+                    description: "取得開始位置"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /books/{bookId}:
+    get:
+      operationId: getBookById
+      summary: "書籍詳細取得"
+      description: "指定されたIDの書籍詳細情報を取得します"
+      tags:
+        - Books
+      security: []
+      parameters:
+        - name: bookId
+          in: path
+          description: 書籍ID
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+            example: '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+      responses:
+        '200':
+          description: "書籍詳細の取得成功"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /login:
+    post:
+      operationId: login
+      summary: "ログイン"
+      description: "ユーザーの認証を行い、アクセストークンを発行します"
+      tags:
+        - Authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: ユーザーのメールアドレス
+                  example: 'user@example.com'
+                password:
+                  type: string
+                  format: password
+                  description: ユーザーのパスワード
+                  minLength: 8
+                  maxLength: 128
+                  example: 'password123'
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    description: アクセストークン（JWT）
+                    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+                  tokenType:
+                    type: string
+                    description: トークンタイプ
+                    example: 'Bearer'
+                  expiresIn:
+                    type: integer
+                    description: トークンの有効期限（秒）
+                    example: 3600
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: 'Unauthorized'
+                message: 'メールアドレスまたはパスワードが正しくありません'
+                statusCode: 401
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /logout:
+    post:
+      operationId: logout
+      summary: "ログアウト"
+      description: "現在のセッションを無効化します"
+      tags:
+        - Authentication
+      responses:
+        '204':
+          description: ログアウト成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /books/{bookId}/order:
+    post:
+      operationId: orderBook
+      summary: "書籍注文"
+      description: "指定された書籍を注文します"
+      tags:
+        - Orders
+      parameters:
+        - name: bookId
+          in: path
+          description: 書籍ID
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+            example: '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+                - userid
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+                  maximum: 999
+                  description: 注文数量
+                  example: 2
+                userid:
+                  type: string
+                  pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+                  description: ユーザーID
+                  example: '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+      responses:
+        '201':
+          description: 注文成功
+        '400':
+          description: バリデーションエラーまたはビジネスロジックエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: バリデーションエラー
+                  value:
+                    error: 'Bad Request'
+                    message: '数量は1以上999以下で指定してください'
+                    statusCode: 400
+                insufficient_stock:
+                  summary: 在庫不足エラー
+                  value:
+                    error: 'Bad Request'
+                    message: '在庫数が不足しています'
+                    statusCode: 400
+                book_not_available:
+                  summary: 販売停止エラー
+                  value:
+                    error: 'Bad Request'
+                    message: 'この本は販売停止されています'
+                    statusCode: 400
+                not_yet_published:
+                  summary: 発売前エラー
+                  value:
+                    error: 'Bad Request'
+                    message: 'この本はまだ販売されていません'
+                    statusCode: 400
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Book:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 書籍ID（ULID）
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+          example: '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+        name:
+          type: string
+          description: 書籍名
+          example: 'ドメイン駆動設計入門'
+        price:
+          type: integer
+          description: 価格（円）
+          minimum: 1
+          example: 2980
+        stock:
+          type: integer
+          description: 在庫数
+          minimum: 0
+          example: 15
+        isPaperbook:
+          type: boolean
+          description: "文庫本かどうか（true: 文庫本、false: 単行本）"
+          example: false
+        publishAt:
+          type: string
+          format: date-time
+          description: 発売日
+          example: '2023-10-15T00:00:00.000Z'
+        isSaled:
+          type: boolean
+          description: "販売停止フラグ（true: 販売停止、false: 販売中）"
+          example: false
+
+    BookDetail:
+      $ref: '#/components/schemas/Book'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ユーザーID（ULID）
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+          example: '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+          example: 'user@example.com'
+        name:
+          type: string
+          description: ユーザー名
+          example: '田中太郎'
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 注文ID（ULID）
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+          example: '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+        userId:
+          type: string
+          description: ユーザーID
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+          example: '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+        bookId:
+          type: string
+          description: 書籍ID
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+          example: '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+        quantity:
+          type: integer
+          description: 注文数量
+          minimum: 1
+          example: 2
+        totalPrice:
+          type: integer
+          description: 合計金額（円）
+          minimum: 1
+          example: 5960
+        orderDate:
+          type: string
+          format: date-time
+          description: 注文日時
+          example: '2023-10-15T12:30:45.123Z'
+        book:
+          $ref: '#/components/schemas/Book'
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: エラータイプ
+          example: 'Bad Request'
+        message:
+          type: string
+          description: エラーメッセージ
+          example: 'リクエストが不正です'
+        statusCode:
+          type: integer
+          description: HTTPステータスコード
+          example: 400
+      required:
+        - error
+        - message
+        - statusCode
+
+  responses:
+    BadRequest:
+      description: リクエストが不正です
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: 'Bad Request'
+            message: 'リクエストが不正です'
+            statusCode: 400
+
+    Unauthorized:
+      description: 認証が必要です
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: 'Unauthorized'
+            message: '認証が必要です'
+            statusCode: 401
+
+    NotFound:
+      description: リソースが見つかりません
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: 'Not Found'
+            message: '指定されたリソースが見つかりません'
+            statusCode: 404
+
+    InternalServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: 'Internal Server Error'
+            message: 'サーバー内部でエラーが発生しました'
+            statusCode: 500
+
+tags:
+  - name: Books
+    description: 書籍関連のAPI
+  - name: Authentication
+    description: 認証関連のAPI
+  - name: Orders
+    description: 注文関連のAPI

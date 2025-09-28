@@ -1,7 +1,9 @@
 # book-store-ddd
 DDD練習用書籍ECサイト
 
-## 前提条件
-- nodejs v22.19
-- `npm install -g pnpm` がインストールされていること
-- `npm i -g @nestjs/cli` がインストールされていること
+## API設計書のUI生成
+```bash
+pnpm i
+pnpm openapi:lint
+pnpm openapi:build:doc
+```
