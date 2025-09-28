@@ -19,7 +19,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:migrate:dev": "dotenv -e .env.local -- prisma migrate dev",
     "db:generate": "prisma generate",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:seed": "dotenv -e .env.local -- ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -42,6 +43,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
+    "dotenv-cli": "^10.0.0",
     "globals": "^16.0.0",
     "jest": "^30.0.0",
     "source-map-support": "^0.5.21",
