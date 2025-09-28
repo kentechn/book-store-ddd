@@ -24,7 +24,7 @@ COPY --from=build /app/dist /app/dist
 # Prismaファイルをコピー
 COPY prisma ./prisma
 
-COPY start_app.sh /app/start.sh
+COPY start_app.sh /app/start_app.sh
 
 EXPOSE 3000
 
