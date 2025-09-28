@@ -19,14 +19,11 @@ export class BookDao implements BookDAOInterface {
     }
   }
 
-  async findAll(): Promise<Book[] | undefined> {
+  async findAll(): Promise<Book[]> {
     try {
       const books = await this.prisma.book.findMany();
       KeyframeEffect;
 
-      if (!books) {
-        return undefined;
-      }
       return books;
     } catch (error) {
       throw error;
