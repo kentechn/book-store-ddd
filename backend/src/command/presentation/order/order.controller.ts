@@ -5,7 +5,7 @@ import {
   HttpStatus, 
   Post 
 } from '@nestjs/common';
-import { CreateOrderDto } from '../dto/order.dto';
+import { CreateOrderDto } from './order.dto';
 
 @Controller('orders')
 export class OrderController {
