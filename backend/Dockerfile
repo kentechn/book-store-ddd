@@ -5,7 +5,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 # CI環境変数を設定
 ENV CI=true
 RUN corepack enable
-COPY . /app
+COPY ./backend /app
 WORKDIR /app
 
 FROM base AS prod-deps
@@ -21,12 +21,12 @@ RUN pnpm build
 FROM base
 COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=build /app/dist /app/dist
-# Prismaファイルをコピー
-COPY prisma ./prisma
+COPY --from=build /app/prisma /app/prisma
 
-COPY start_app.sh /app/start_app.sh
+
+COPY ./backend/start_app.sh /app/start_app.sh
 
 EXPOSE 3000
 
-# RUN chmod +x /app/start_app.sh
-CMD ["/app/start_app.sh"]
+RUN chmod +x /app/start_app.sh
+CMD ["sh", "start_app.sh"]
