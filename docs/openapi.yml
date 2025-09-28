@@ -184,22 +184,13 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /books/{bookId}/order:
+  /orders:
     post:
-      operationId: orderBook
-      summary: "書籍注文"
-      description: "指定された書籍を注文します"
+      operationId: createOrder
+      summary: "注文作成"
+      description: "新しい注文を作成します"
       tags:
         - Orders
-      parameters:
-        - name: bookId
-          in: path
-          description: 書籍ID
-          required: true
-          schema:
-            type: string
-            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
-            example: '01ARZ3NDEKTSV4RRFFQ69G5FAV'
       requestBody:
         required: true
         content:
@@ -207,16 +198,22 @@ paths:
             schema:
               type: object
               required:
+                - bookId
                 - quantity
-                - userid
+                - userId
               properties:
+                bookId:
+                  type: string
+                  pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+                  description: 書籍ID
+                  example: '01ARZ3NDEKTSV4RRFFQ69G5FAV'
                 quantity:
                   type: integer
                   minimum: 1
                   maximum: 999
                   description: 注文数量
                   example: 2
-                userid:
+                userId:
                   type: string
                   pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
                   description: ユーザーID
