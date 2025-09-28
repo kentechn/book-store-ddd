@@ -24,7 +24,10 @@ export class CreateOrderUsecase {
       await this.orderRepository.create(order);
     } catch (error) {
       if (error instanceof DuplicateRepositoryError) {
-        throw new DuplicateUsecaseError(error.message);
+        throw new DuplicateUsecaseError({
+          message: error.message,
+          cause: error,
+        });
       }
       throw error;
     }
