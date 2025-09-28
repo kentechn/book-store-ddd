@@ -1,7 +1,12 @@
 # Backend
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
-## Project setup
+## 事前準備
+```bash
+npm install -g pnpm dotenv-cli @nestjs/cli
+```
+
+## 依存関係インストール
 
 ```bash
 $ pnpm install
@@ -24,7 +29,7 @@ $ pnpm run start:prod
 pnpm run check
 ```
 
-## db起動からマイグレーション
+## db起動～マイグレーション
 ```bash
 # db起動
 docker compose up -d
