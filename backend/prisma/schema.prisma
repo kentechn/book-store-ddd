@@ -14,7 +14,43 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@map("users")
+}
+
+model Book {
+  id          String   @id
+  stock       Int
+  price       Int
+  isPaperbook Boolean  @map("is_paperback")
+  publishAt   DateTime @map("publish_at")
+  name        String
+  isSaled     Boolean  @map("is_saled")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@map("books")
+}
+
+model Order {
+  id        String   @id
+  userId    String   @map("user_id")
+  bookId    String   @map("book_id")
+  quantity  Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@map("orders")
 }

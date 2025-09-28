@@ -5,26 +5,24 @@ export class Book {
   private readonly _id: string;
   private readonly _stock: number;
   private readonly _price: number;
-  private readonly _isPaperback: boolean;
+  private readonly _isPaperbook: boolean;
   private readonly _name: string;
   private readonly _publishAt: Date;
   private readonly _isSaled: boolean;
-
 
   constructor({
     id,
     stock,
     price,
-    isPaperback,
-    userId,
+    isPaperbook,
     publishAt,
     name,
-    isSaled
+    isSaled,
   }: {
     id: string;
     stock: number;
     price: number;
-    isPaperback: boolean;
+    isPaperbook: boolean;
     publishAt: Date;
     name: string;
     isSaled: boolean;
@@ -32,24 +30,23 @@ export class Book {
     this._id = id;
     this._stock = stock;
     this._price = price;
-    this._isPaperback = isPaperback;
+    this._isPaperbook = isPaperbook;
     this._publishAt = publishAt;
     this._name = name;
     this._isSaled = isSaled;
   }
 
-
   static create({
     stock,
     price,
-    isPaperback,
+    isPaperbook,
     publishAt,
     name,
-    isSaled
+    isSaled,
   }: {
     stock: number;
     price: number;
-    isPaperback: boolean;
+    isPaperbook: boolean;
     publishAt: Date;
     name: string;
     isSaled: boolean;
@@ -58,10 +55,10 @@ export class Book {
       id: ulid(),
       stock,
       price,
-      isPaperback,
+      isPaperbook,
       publishAt,
       name,
-      isSaled
+      isSaled,
     });
   }
 
@@ -69,15 +66,15 @@ export class Book {
     id,
     stock,
     price,
-    isPaperback,
+    isPaperbook,
     publishAt,
     name,
-    isSaled
+    isSaled,
   }: {
     id: string;
     stock: number;
     price: number;
-    isPaperback: boolean;
+    isPaperbook: boolean;
     publishAt: Date;
     name: string;
     isSaled: boolean;
@@ -86,10 +83,10 @@ export class Book {
       id,
       stock,
       price,
-      isPaperback,
+      isPaperbook,
       publishAt,
       name,
-      isSaled
+      isSaled,
     });
   }
 
@@ -105,8 +102,8 @@ export class Book {
     return this._price;
   }
 
-  get isPaperback(): boolean {
-    return this._isPaperback;
+  get isPaperbook(): boolean {
+    return this._isPaperbook;
   }
 
   get publishAt(): Date {
@@ -131,12 +128,12 @@ export class Book {
       id: this._id,
       stock: this._stock - quantity,
       price: this._price,
-      isPaperback: this._isPaperback,
+      isPaperbook: this._isPaperbook,
       publishAt: this._publishAt,
       name: this._name,
-      isSaled: this._isSaled
-    })
-  };
+      isSaled: this._isSaled,
+    });
+  }
 
   isSale(quantity: number, now: Date): boolean {
     // 本が販売停止の場合エラー
