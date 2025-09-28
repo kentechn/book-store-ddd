@@ -1,7 +1,7 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { Injectable } from "@nestjs/common";
 import { OrderRepositoryInterface } from "../../domain/order/order.repository.interface";
-import { Order } from "src/command/domain/order/order";
+import { Order } from "../../domain/order/order";
 import { DuplicateRepositoryError } from "../errors/common.repository.error";
 
 @Injectable()
