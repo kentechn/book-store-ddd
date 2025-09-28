@@ -5,13 +5,18 @@ import { Order } from "../../domain/order/order";
 import { DuplicateRepositoryError } from "../errors/common.repository.error";
 
 @Injectable()
-class OrderRepository implements OrderRepositoryInterface {
+export class OrderRepository implements OrderRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) {}
 
   async create(order: Order): Promise<void> {
     try {
       await this.prisma.order.create({
-        data: order,
+        data: {
+          id: order.id,
+          userId: order.userId,
+          bookId: order.bookId,
+          quantity: order.quantity,
+        },
       });
     } catch (error) {
       if (
