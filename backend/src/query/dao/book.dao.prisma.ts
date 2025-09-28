@@ -22,7 +22,6 @@ export class BookDao implements BookDAOInterface {
   async findAll(): Promise<Book[]> {
     try {
       const books = await this.prisma.book.findMany();
-      KeyframeEffect;
 
       return books;
     } catch (error) {
